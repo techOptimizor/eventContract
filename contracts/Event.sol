@@ -2,7 +2,7 @@
 pragma solidity ^0.8.7;
 import "./PriceConverter.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-// we can perhaps use the Roles instead so we can claim our royalty by ourselves
+// we can perhaps use the Roles instead so we can claim our service by ourselves
 // without waiting for them to claim first then do the split
 // of course this will need to do some rework.
 
@@ -28,7 +28,7 @@ contract Event is Ownable {
     EventState private s_eventState; // not sure what this is for, saw it on docs
 
     address payable private immutable i_eventCreator;
-    address payable private immutable i_royalty; // our wallet for service charge
+    address payable private immutable i_service; // our wallet for service charge
     string private s_eventName;
     // details can get long, I think it's better to store somewhere else or contract will be expensive
     string private s_eventDetails;
@@ -43,7 +43,7 @@ contract Event is Ownable {
         uint256 purchaseEndDate,
         uint256 ticketPrice,
         address payable eventCreator,
-        address payable royalty,
+        address payable service,
         address priceFeedAddress,
         string memory eventName,
         string memory eventDetails
@@ -55,7 +55,7 @@ contract Event is Ownable {
         s_ticketPurchased = 0; // we can either use constructor to designate from event creator contract or hard code here
         s_eventState = EventState.OPEN;
         i_eventCreator = eventCreator;
-        i_royalty = royalty; // we can either use constructor to designate from event creator contract or hard code here
+        i_service = service; // we can either use constructor to designate from event creator contract or hard code here
         s_priceFeed = AggregatorV3Interface(priceFeedAddress);
         s_eventName = eventName;
         s_eventDetails = eventDetails;
@@ -84,13 +84,13 @@ contract Event is Ownable {
 
     function withdraw() public payable onlyOwner {
         uint256 balance = address(this).balance;
-        uint256 royalty_fee = balance * 100; // 1%
+        uint256 service_fee = balance / 100; // 1%
 
-        (bool callSuccessRoyalty, ) = i_royalty.call{value: royalty_fee}("");
-        require(callSuccessRoyalty, "callfailed");
+        (bool callSuccessservice, ) = i_service.call{value: service_fee}("");
+        require(callSuccessservice, "callfailed");
         (bool callSuccess, ) = payable(msg.sender).call{
             value: address(this).balance
-        }(""); // contract has to pay gas fees also? so we take royalty first then leftover is theirs
+        }(""); // contract has to pay gas fees also? so we take service first then leftover is theirs
         require(callSuccess, "callfailed");
     }
 
@@ -147,13 +147,13 @@ contract Event is Ownable {
         return s_eventState;
     }
 
-    // not sure if we need the view function for eventcreator and royalty
+    // not sure if we need the view function for eventcreator and service
     function getEventCreator() public view returns (address) {
         return i_eventCreator;
     }
 
-    function getRoyalty() public view returns (address) {
-        return i_royalty;
+    function getservice() public view returns (address) {
+        return i_service;
     }
 
     function getEventName() public view returns (string memory) {
