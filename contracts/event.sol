@@ -36,11 +36,7 @@ contract EventCreator {
         uint256 _purchaseStartDate,
         uint256 _ticketPrice,
         uint256 _purchaseEndDate
-    )
-        public
-        // uint256 _eventId
-        NotCreated
-    {
+    ) public NotCreated {
         if (_eventDate < block.timestamp) {
             revert EventCreator__EventDateMustBeGreaterThanNow();
         }
@@ -59,7 +55,6 @@ contract EventCreator {
             _purchaseEndDate,
             _ticketPrice
         );
-        EventInfo memory eventinfo;
         eventOwner[eventId] = msg.sender;
     }
 
