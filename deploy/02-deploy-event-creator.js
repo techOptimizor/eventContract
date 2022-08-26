@@ -10,4 +10,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     })
     log(`Contract deployed to ${EventCreator.address} 🥳🥳`)
 }
-module.exports.tags = ["all", "main"]
+module.exports.tags = ["all", "eventCreator"]
