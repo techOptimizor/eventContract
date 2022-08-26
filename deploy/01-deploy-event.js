@@ -36,7 +36,7 @@ module.exports = async ({getNamedAccounts, deployments }) => {
     const eventName = "EVENT NAME";
     const eventDetails = "random event details";
     const args = [eventDate, purchaseStartDate, purchaseEndDate, ticketPrice, eventCreator, service, priceFeedAddress, eventName, eventDetails]
-    console.log("before deploy")
+    console.log("Deploying contract")
     const event = await deploy("Event", {
         from: deployer,
         args:args,

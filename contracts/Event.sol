@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // without waiting for them to claim first then do the split
 // of course this will need to do some rework.
 
-error Event_PurchaseDatePassed();
-error Event_PurchaseDateNotStarted();
-error Event_NotEnoughCryptoSent();
+error Event__PurchaseDatePassed();
+error Event__PurchaseDateNotStarted();
+error Event__NotEnoughCryptoSent();
 
 contract Event is Ownable {
     using PriceConverter for uint256;
@@ -63,14 +63,14 @@ contract Event is Ownable {
 
     function purchaseTicket() public payable {
         if (msg.value.getConversionRate(s_priceFeed) < s_ticketPrice) {
-            revert Event_NotEnoughCryptoSent();
+            revert Event__NotEnoughCryptoSent();
         }
         // warning due to possible time manipulation of few second by miners, you guys can decide if you want to change it
         if (block.timestamp > s_purchaseEndDate) {
-            revert Event_PurchaseDatePassed();
+            revert Event__PurchaseDatePassed();
         }
         if (block.timestamp < s_purchaseStartDate) {
-            revert Event_PurchaseDateNotStarted();
+            revert Event__PurchaseDateNotStarted();
         }
         // nft minting
         //.....
@@ -95,30 +95,41 @@ contract Event is Ownable {
     }
 
     // update functions
-    function updateEventDate(uint256 newDate) private onlyOwner {
+    function updateEventDate(uint256 newDate) public onlyOwner {
+        require(newDate > s_purchaseEndDate, "must be after purchaseEndDate");
         s_eventDate = newDate;
     }
 
-    function updatePurchaseStartDate(uint256 newStartDate) private onlyOwner {
+    function updatePurchaseStartDate(uint256 newStartDate) public onlyOwner {
+        require(
+            newStartDate < s_purchaseEndDate,
+            "must be before purchaseEndDate"
+        );
         s_purchaseStartDate = newStartDate;
     }
 
-    function updatePurchaseEndDate(uint256 newEndDate) private onlyOwner {
+    function updatePurchaseEndDate(uint256 newEndDate) public onlyOwner {
+        require(
+            newEndDate > s_purchaseStartDate && newEndDate < s_eventDate,
+            "must be between the 2 dates"
+        );
         s_purchaseEndDate = newEndDate;
     }
 
-    function updateTicketPrice(uint256 newTicketPrice) private onlyOwner {
+    function updateTicketPrice(uint256 newTicketPrice) public onlyOwner {
         s_ticketPrice = newTicketPrice;
     }
 
-    function updateEventName(string memory newEventName) private onlyOwner {
+    function updateEventName(string memory newEventName) public onlyOwner {
+        require(bytes(newEventName).length != 0, "cannot be empty string");
         s_eventName = newEventName;
     }
 
     function updateEventDetails(string memory newEventDetails)
-        private
+        public
         onlyOwner
     {
+        require(bytes(newEventDetails).length != 0, "cannot be empty string");
         s_eventDetails = newEventDetails;
     }
 
@@ -127,7 +138,7 @@ contract Event is Ownable {
         return s_eventDate;
     }
 
-    function gePurchaseStartDate() public view returns (uint256) {
+    function getPurchaseStartDate() public view returns (uint256) {
         return s_purchaseStartDate;
     }
 
@@ -135,7 +146,7 @@ contract Event is Ownable {
         return s_purchaseEndDate;
     }
 
-    function getTicketPurchase() public view returns (uint256) {
+    function getTicketPurchased() public view returns (uint256) {
         return s_ticketPurchased;
     }
 
@@ -152,7 +163,7 @@ contract Event is Ownable {
         return i_eventCreator;
     }
 
-    function getservice() public view returns (address) {
+    function getService() public view returns (address) {
         return i_service;
     }
 
