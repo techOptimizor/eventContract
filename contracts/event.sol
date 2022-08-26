@@ -3,6 +3,9 @@
 pragma solidity ^0.8.7;
 
 error EventCreator__EventAlreadyExists();
+error EventCreator__EndDateMustBeGreaterThanStartDate();
+error EventCreator__EventDateMustBeGreaterThanNow();
+error EventCreator__EventDateMustBeGreaterThanPurchaseEndDate();
 
 contract EventCreator {
     //Event information like the price and start and end.
@@ -14,14 +17,15 @@ contract EventCreator {
     }
 
     mapping(uint256 => address) private eventOwner; // To get and keep track of event creators
+    mapping(uint256 => EventInfo) private eventInfo;
 
     uint256 public eventId; // An id to get an event creator
 
     string private s_eventName;
-    string private s_eventDetails;
+    string private s_eventDetails; // Making these offchain would be better to avoid much cost.
 
-    modifier NotCreated(uint256 _eventId) {
-        if (eventOwner[_eventId] != address(0)) {
+    modifier NotCreated() {
+        if (eventOwner[eventId] != address(0)) {
             revert EventCreator__EventAlreadyExists();
         }
         _;
@@ -31,16 +35,32 @@ contract EventCreator {
         uint256 _eventDate,
         uint256 _purchaseStartDate,
         uint256 _ticketPrice,
-        uint256 _purchaseEndDate,
-        uint256 _eventId
-    ) public NotCreated(_eventId) {
-        EventInfo(
+        uint256 _purchaseEndDate
+    )
+        public
+        // uint256 _eventId
+        NotCreated
+    {
+        if (_eventDate < block.timestamp) {
+            revert EventCreator__EventDateMustBeGreaterThanNow();
+        }
+        if (_purchaseStartDate > _purchaseEndDate) {
+            revert EventCreator__EndDateMustBeGreaterThanStartDate();
+        }
+        if (_purchaseEndDate > _eventDate) {
+            revert EventCreator__EventDateMustBeGreaterThanPurchaseEndDate();
+        }
+
+        eventId++;
+
+        eventInfo[eventId] = EventInfo(
             _eventDate,
             _purchaseStartDate,
             _purchaseEndDate,
             _ticketPrice
         );
-        eventOwner[_eventId] = msg.sender;
+        EventInfo memory eventinfo;
+        eventOwner[eventId] = msg.sender;
     }
 
     function getEventName() public view returns (string memory) {
@@ -53,5 +73,13 @@ contract EventCreator {
 
     function getEventOwner(uint256 _eventId) public view returns (address) {
         return eventOwner[_eventId];
+    }
+
+    function getEventInfo(uint256 _eventId)
+        public
+        view
+        returns (EventInfo memory)
+    {
+        return eventInfo[_eventId];
     }
 }
